@@ -18,10 +18,93 @@ print()
 
 
 def get_distance(us):
-    try:
-        return us.distance_centimeters
-    except:
-        return 0
+    distance = 0
+    while distance == 0:
+        try:
+            distance = us.distance_centimeters
+        except:
+            distance = 0
+
+    return distance
+
+
+class Walled:
+    def __init__(self):
+        self.us = core.UltrasonicSensor('in1')
+        self.rm = ev3.LargeMotor('outA')
+        self.lm = ev3.LargeMotor('outB')
+        self.rm.run_direct()
+        self.lm.run_direct()
+
+        self.start_distance = 0
+        self.start_time = 0
+
+        self.SPEED = 50
+
+    def set_speed(self, right, left):
+        self.rm.duty_cycle_sp = right
+        self.lm.duty_cycle_sp = left
+
+    def _get_distance(self):
+        distance = 0
+        while distance == 0:
+            try:
+                distance = self.us.distance_centimeters
+            except OSError:
+                distance = 0
+
+        return distance
+
+    def start(self):
+        self.start_distance = self._get_distance()
+        self.start_time = time.time()
+        self.run_until(10, self.start_time)
+        self.calibrate()
+
+    def turn(self, value):
+        # Value is fraction of 360
+        pass
+
+    def calibrate(self):
+        self.set_speed(35, -35)
+
+        start_time = time.time()
+        iterations = 0
+        distance = self._get_distance()
+        while iterations < 40 or abs(next_distance - distance) > 0:
+            next_distance = get_distance()
+            print(next_distance)
+            time.sleep(0.025)
+            iterations += 1
+
+        total_time = (time.time() - start_time)
+        time.sleep(total_time * 0.03)
+
+        total_time = (time.time() - start_time) * 1.03
+        print(total_time)
+
+        self.set_speed(0, 0)
+
+    def run_until(self, to_distance, _time=0):
+
+        self.set_speed(self.SPEED, self.SPEED)
+        distance = self._get_distance()
+        print(distance)
+        while distance > to_distance:
+            distance = self._get_distance()
+            print(distance)
+            time.sleep(0.05)
+
+        self.set_speed(0, 0)
+        return time.time() - _time
+
+
+def calibrate():
+    pass
+
+
+def turn():
+    pass
 
 
 def run3():
@@ -40,8 +123,9 @@ def run3():
 
     start_time = time.time()
 
-    set_speed(SPEED, rm, lm)
-    while distance > 15:
+    set_speed(SPEED-1, rm)
+    set_speed(SPEED, lm)
+    while distance > 10:
         distance = get_distance(us)
         print(distance)
         time.sleep(0.05)
@@ -50,17 +134,18 @@ def run3():
     forward_time = time.time() - start_time
     print(forward_time)
 
-    ev3.Sound.speak('Calibrating!').wait()
+    ev3.Sound.speak('Calibrating!')
+    time.sleep(0.1)
 
     set_speed(35, rm)
     set_speed(-35, lm)
 
     start_time = time.time()
     iterations = 0
-    while iterations < 50 or abs(next_distance - distance) > 1:
+    while iterations < 40 or abs(next_distance - distance) > 0:
         next_distance = get_distance(us)
         print(next_distance)
-        time.sleep(0.05)
+        time.sleep(0.025)
         iterations += 1
 
     total_time = (time.time() - start_time)
@@ -71,20 +156,21 @@ def run3():
 
     set_speed(0, rm, lm)
 
-    ev3.Sound.speak('Calibration done! wubba dubba dub dub!').wait()
+    ev3.Sound.speak('Calibration done! wubba dubba dub dub!')
 
     time.sleep(1)
 
     set_speed(35, rm)
     set_speed(-35, lm)
 
-    turn_time = total_time / 2
+    turn_time = total_time / 3
     time.sleep(turn_time)
     set_speed(0, rm, lm)
 
-    ev3.Sound.speak('Perfect 180 degree turn motherfucker!').wait()
-
-    set_speed(SPEED, rm, lm)
+    ev3.Sound.speak('Perfect 180 degree turn motherfucker!')
+    time.sleep(0.1)
+    set_speed(SPEED - 1, rm)
+    set_speed(SPEED, lm)
     time.sleep(forward_time)
     set_speed(0, rm, lm)
 
@@ -208,5 +294,6 @@ def run():
 
 if __name__ == "__main__":
     atexit.register(reset.reset_walled)
-    run3()
-
+    # run3()
+    w = Walled()
+    w.start()
