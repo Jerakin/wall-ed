@@ -41,6 +41,8 @@ class Walled:
 
         self.SPEED = 50
 
+        self.turn_time = 0
+
     def set_speed(self, right, left):
         self.rm.duty_cycle_sp = right
         self.lm.duty_cycle_sp = left
@@ -61,9 +63,16 @@ class Walled:
         self.run_until(10, self.start_time)
         self.calibrate()
 
-    def turn(self, value):
+    def turn(self, value=0, direction=0):
         # Value is fraction of 360
-        pass
+        turn_time = self.turn_time * value
+        if direction == 0:
+            r, l = self.SPEED, -self.SPEED
+        else:
+            r, l = -self.SPEED, self.SPEED
+        self.set_speed(r, l)
+        time.sleep(turn_time)
+        set_speed(0, 0)
 
     def calibrate(self):
         self.set_speed(35, -35)
@@ -72,39 +81,26 @@ class Walled:
         iterations = 0
         distance = self._get_distance()
         while iterations < 40 or abs(next_distance - distance) > 0:
-            next_distance = get_distance()
-            print(next_distance)
+            next_distance = self._get_distance()
             time.sleep(0.025)
             iterations += 1
 
         total_time = (time.time() - start_time)
         time.sleep(total_time * 0.03)
 
-        total_time = (time.time() - start_time) * 1.03
-        print(total_time)
+        self.turn_time = (time.time() - start_time) * 1.03
 
         self.set_speed(0, 0)
 
     def run_until(self, to_distance, _time=0):
-
         self.set_speed(self.SPEED, self.SPEED)
         distance = self._get_distance()
-        print(distance)
         while distance > to_distance:
             distance = self._get_distance()
-            print(distance)
             time.sleep(0.05)
 
         self.set_speed(0, 0)
         return time.time() - _time
-
-
-def calibrate():
-    pass
-
-
-def turn():
-    pass
 
 
 def run3():
@@ -182,6 +178,7 @@ def run3():
     set_speed(0, rm, lm)
 
     exit()
+
 
 class Movement(Enum):
     FORWARD = 1
